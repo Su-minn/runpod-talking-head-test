@@ -1,0 +1,26 @@
+# Python 가상환경
+venv/
+env/
+.venv/
+
+# Python 캐시 파일
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS 파일
+.DS_Store
+.DS_Store?
+
+# 임시 파일
+*.tmp
+*.log
+
+# IDE 설정
+.vscode/
+.idea/
+
+# 환경 변수 파일
+.env
+.env.local 
