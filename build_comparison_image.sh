@@ -4,8 +4,8 @@
 
 echo "🚀 Building SadTalker vs Wav2Lip comparison Docker image..."
 
-# Docker Hub 사용자명 (수정 필요)
-DOCKER_USERNAME="your-dockerhub-username"
+# Docker Hub 사용자명
+DOCKER_USERNAME="smsj68"
 IMAGE_NAME="runpod-talking-head-comparison"
 IMAGE_TAG="latest"
 FULL_IMAGE_NAME="${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"

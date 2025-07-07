@@ -23,4 +23,7 @@ __pycache__/
 
 # 환경 변수 파일
 .env
-.env.local 
+.env.local
+
+# API Key 스크립트 (보안)
+set_api_key.sh 

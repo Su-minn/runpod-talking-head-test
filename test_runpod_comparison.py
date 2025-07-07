@@ -9,14 +9,14 @@ import time
 import os
 from typing import Dict, Any
 
-# RunPod API 설정
+# RunPod API 설정 (환경변수에서 읽기)
 RUNPOD_API_KEY = os.getenv('RUNPOD_API_KEY')
 RUNPOD_ENDPOINT_ID = os.getenv('RUNPOD_ENDPOINT_ID')
 
-# GitHub Raw URLs (자동 생성된 URLs)
-GITHUB_IMAGE_URL = "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/profile.png"
-GITHUB_AUDIO_WAV_URL = "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/test.wav"
-GITHUB_AUDIO_MP3_URL = "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/test.mp3"
+# GitHub Raw URLs (환경변수 또는 기본값)
+GITHUB_IMAGE_URL = os.getenv('GITHUB_IMAGE_URL', "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/profile.png")
+GITHUB_AUDIO_WAV_URL = os.getenv('GITHUB_AUDIO_WAV_URL', "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/test.wav")
+GITHUB_AUDIO_MP3_URL = os.getenv('GITHUB_AUDIO_MP3_URL', "https://raw.githubusercontent.com/Su-minn/runpod-talking-head-test/main/assets/test.mp3")
 
 def call_runpod_api(endpoint_id: str, api_key: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     """RunPod Serverless API 호출"""
