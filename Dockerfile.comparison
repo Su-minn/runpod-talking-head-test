@@ -1,0 +1,133 @@
+# SadTalker vs Wav2Lip 비교 테스트용 통합 Docker 이미지
+FROM nvidia/cuda:11.7.1-devel-ubuntu20.04
+
+# 기본 환경 설정
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6+PTX"
+ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
+ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
+
+# 시스템 업데이트 및 기본 패키지 설치
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    wget \
+    curl \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libglib2.0-0 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libfontconfig1 \
+    libxrender1 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 패키지 업그레이드
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# 작업 디렉토리 설정
+WORKDIR /workspace
+
+# PyTorch 및 기본 패키지 설치
+RUN pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 \
+    --extra-index-url https://download.pytorch.org/whl/cu117
+
+# 공통 Python 패키지 설치
+RUN pip install \
+    runpod \
+    requests \
+    numpy \
+    opencv-python \
+    pillow \
+    matplotlib \
+    scipy \
+    scikit-image \
+    librosa \
+    soundfile \
+    moviepy \
+    imageio[ffmpeg] \
+    face-alignment \
+    resampy \
+    pydub \
+    tqdm
+
+# SadTalker 설치
+RUN git clone https://github.com/OpenTalker/SadTalker.git /workspace/SadTalker
+WORKDIR /workspace/SadTalker
+
+# SadTalker 요구사항 설치
+RUN pip install \
+    yacs==0.1.8 \
+    pyyaml \
+    dlib \
+    kornia==0.6.8 \
+    einops \
+    facexlib \
+    xformers==0.0.16
+
+# GFPGAN 설치 (SadTalker의 얼굴 개선용)
+RUN pip install gfpgan
+
+# SadTalker 모델 다운로드
+RUN mkdir -p checkpoints && \
+    cd checkpoints && \
+    # 기본 체크포인트 다운로드
+    wget -O SadTalker_V002.tar \
+        "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V002.tar" && \
+    tar -xf SadTalker_V002.tar && \
+    rm SadTalker_V002.tar
+
+# gfpgan weights 다운로드
+RUN mkdir -p gfpgan/weights && \
+    cd gfpgan/weights && \
+    wget -O GFPGANv1.4.pth \
+        "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+
+# Wav2Lip 설치
+WORKDIR /workspace
+RUN git clone https://github.com/Rudrabha/Wav2Lip.git /workspace/Wav2Lip
+WORKDIR /workspace/Wav2Lip
+
+# Wav2Lip 요구사항 설치
+RUN pip install \
+    tensorflow \
+    keras \
+    imutils \
+    mediapipe
+
+# Wav2Lip 모델 다운로드
+RUN mkdir -p checkpoints && \
+    cd checkpoints && \
+    # WAV2LIP GAN 모델 다운로드
+    wget -O wav2lip_gan.pth \
+        "https://iiitaphyd-my.sharepoint.com/personal/radrabha_m_research_iiit_ac_in/_layouts/15/download.aspx?share=EdjI7bZlgApMqsVoEUUXpLsBxqXbn5z8VTmoxp2pgHVvuA" && \
+    # face detection 모델 다운로드
+    wget -O s3fd.pth \
+        "https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth"
+
+# face_detection 모델을 올바른 위치로 이동
+RUN mkdir -p face_detection/detection/sfd/s3fd.pth
+RUN mv checkpoints/s3fd.pth face_detection/detection/sfd/
+
+# 통합 handler 복사
+WORKDIR /workspace
+COPY runpod_comparison_handler.py /workspace/handler.py
+
+# 실행 권한 설정
+RUN chmod +x /workspace/handler.py
+
+# 환경 변수 설정
+ENV PYTHONPATH=/workspace:/workspace/SadTalker:/workspace/Wav2Lip:$PYTHONPATH
+
+# 포트 노출 (RunPod용)
+EXPOSE 8000
+
+# RunPod handler 시작
+CMD ["python3", "/workspace/handler.py"] 
